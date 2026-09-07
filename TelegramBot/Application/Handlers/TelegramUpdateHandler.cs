@@ -17,40 +17,52 @@ public sealed class TelegramUpdateHandler(
             logger.LogInformation(
                 "Update {UpdateId} has no message.",
                 update.UpdateId);
-
+    
             return;
         }
-
+    
         var chatId = update.Message.Chat.Id;
         var text = update.Message.Text?.Trim();
-
+    
         if (string.IsNullOrWhiteSpace(text))
         {
             logger.LogInformation(
                 "Message received from chat {ChatId} without text.",
                 chatId);
-
+    
             return;
         }
-
+    
         switch (text.ToLowerInvariant())
         {
             case "/start":
-                await telegramClient.SendTextMessageAsync(
+                var statusMessage =
+                    await telegramClient.SendTextMessageAsync(
+                        chatId,
+                        "جاري المعالجة...",
+                        cancellationToken);
+    
+                await telegramClient.EditTextMessageAsync(
                     chatId,
-                    "مرحباً بك في Todo Bot!",
+                    statusMessage.MessageId,
+                    "تمت المعالجة بنجاح!",
                     cancellationToken);
-            
+    
                 logger.LogInformation(
-                    "Start reply sent to chat {ChatId}.",
+                    "Start message updated for chat {ChatId}.",
                     chatId);
                 break;
-
+    
             default:
                 logger.LogInformation(
                     "Unknown text received from chat {ChatId}: {Text}",
                     chatId,
                     text);
+    
+                await telegramClient.SendTextMessageAsync(
+                    chatId,
+                    "الأمر غير معروف. استخدم /start.",
+                    cancellationToken);
                 break;
         }
     }
