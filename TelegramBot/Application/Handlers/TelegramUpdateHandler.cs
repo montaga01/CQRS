@@ -18,7 +18,7 @@ public sealed class TelegramUpdateHandler(
                 "Update {UpdateId} has no message.",
                 update.UpdateId);
 
-            return Task.CompletedTask;
+            return;
         }
 
         var chatId = update.Message.Chat.Id;
@@ -30,7 +30,7 @@ public sealed class TelegramUpdateHandler(
                 "Message received from chat {ChatId} without text.",
                 chatId);
 
-            return Task.CompletedTask;
+            return;
         }
 
         switch (text.ToLowerInvariant())
@@ -46,7 +46,6 @@ public sealed class TelegramUpdateHandler(
                     chatId);
                 break;
 
-
             default:
                 logger.LogInformation(
                     "Unknown text received from chat {ChatId}: {Text}",
@@ -54,7 +53,5 @@ public sealed class TelegramUpdateHandler(
                     text);
                 break;
         }
-
-        return Task.CompletedTask;
     }
 }
