@@ -1,5 +1,7 @@
 using TelegramBot.Contracts;
 using TelegramBot.Infrastructure.Telegram;
+using TelegramBot.Contracts;
+
 
 
 namespace TelegramBot.Application.Handlers;
@@ -36,22 +38,19 @@ public sealed class TelegramUpdateHandler(
         switch (text.ToLowerInvariant())
         {
             case "/start":
-                var statusMessage =
-                    await telegramClient.SendTextMessageAsync(
-                        chatId,
-                        "جاري المعالجة...",
-                        cancellationToken);
-    
-                await telegramClient.EditTextMessageAsync(
+                await telegramClient.SendTextMessageWithButtonAsync(
                     chatId,
-                    statusMessage.MessageId,
-                    "تمت المعالجة بنجاح!",
+                    "مرحباً بك في Todo Bot! اختر من القائمة:",
+                    new TelegramButton(
+                        "إضافة مهمة",
+                        "add_todo"),
                     cancellationToken);
-    
+            
                 logger.LogInformation(
-                    "Start message updated for chat {ChatId}.",
+                    "Start message sent to chat {ChatId}.",
                     chatId);
                 break;
+
     
             default:
                 logger.LogInformation(

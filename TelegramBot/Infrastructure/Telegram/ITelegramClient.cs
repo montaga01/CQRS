@@ -1,3 +1,5 @@
+using TelegramBot.Contracts;
+
 namespace TelegramBot.Infrastructure.Telegram;
 
 public sealed record TelegramSentMessage(
@@ -9,6 +11,12 @@ public interface ITelegramClient
     Task<TelegramSentMessage> SendTextMessageAsync(
         long chatId,
         string text,
+        CancellationToken cancellationToken = default);
+
+    Task<TelegramSentMessage> SendTextMessageWithButtonAsync(
+        long chatId,
+        string text,
+        TelegramButton button,
         CancellationToken cancellationToken = default);
 
     Task EditTextMessageAsync(
