@@ -1,0 +1,28 @@
+## Build and compiled output
+bin/
+obj/
+out/
+
+## User-specific / IDE files
+.vs/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+*.user
+*.userosscache
+*.sln.docstates
+
+## Sensitive configuration files (Uncomment if you store secrets here)
+# appsettings.Development.json
+# appsettings.json
+*.env
+
+## Packages
+*.nupkg
+**/packages/
+
+## SQLite database files (بيانات وقت التشغيل، مش كود، ومحتواها بيتغيّر باستمرار)
+*.db
+*.db-shm
+*.db-wal

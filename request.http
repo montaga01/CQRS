@@ -1,0 +1,28 @@
+@baseurl = https://localhost:7271
+
+### GET api/todos
+GET {{baseurl}}/api/todos
+
+### GET By Id api/todos/ab123
+@todoId = ccbf9127-5b71-477c-8123-16ccde799608
+GET {{baseurl}}/api/todos/{{todoId}}
+
+### POST todo api/todo
+POST {{baseurl}}/api/todos
+Content-Type: application/json
+
+{
+  "title": "New Todo"
+}
+
+### PUT todo api/todo/ab123
+PUT {{baseurl}}/api/todos/{{todoId}}
+Content-Type: application/json
+
+{
+  "title": "New Todo one",
+  "completed": true
+}
+
+### DELETE todo api/todo/ab123
+DELETE {{baseurl}}/api/todos/{{todoId}}
