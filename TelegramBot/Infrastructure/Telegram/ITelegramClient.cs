@@ -24,4 +24,10 @@ public interface ITelegramClient
         int messageId,
         string text,
         CancellationToken cancellationToken = default);
+
+    Task AnswerCallbackQueryAsync(
+        string callbackQueryId,
+        string? text = null,
+        CancellationToken cancellationToken = default);
+
 }

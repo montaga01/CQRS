@@ -1,36 +1,11 @@
-using TelegramBot.Application.Handlers;
+using TelegramBot.Application;
 using TelegramBot.Endpoints;
-using TelegramBot.Configuration;
-using Microsoft.Extensions.Options;
-using Telegram.Bot;
-using TelegramBot.Infrastructure.Telegram;
-
-
+using TelegramBot.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddScoped<TelegramUpdateHandler>();
-
-builder.Services.Configure<TelegramOptions>(
-    builder.Configuration.GetSection("Telegram"));
-
-builder.Services.AddSingleton<ITelegramBotClient>(serviceProvider =>
-{
-    var options = serviceProvider
-        .GetRequiredService<IOptions<TelegramOptions>>()
-        .Value;
-
-    if (string.IsNullOrWhiteSpace(options.BotToken))
-    {
-        throw new InvalidOperationException(
-            "Telegram bot token is missing.");
-    }
-
-    return new TelegramBotClient(options.BotToken);
-});
-
-builder.Services.AddScoped<ITelegramClient, TelegramClient>();
-
+builder.Services.AddBotApplication();
+builder.Services.AddBotInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 

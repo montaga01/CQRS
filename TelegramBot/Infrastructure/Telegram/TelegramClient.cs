@@ -56,4 +56,15 @@ public sealed class TelegramClient(
             text,
             cancellationToken: cancellationToken);
     }
+    public async Task AnswerCallbackQueryAsync(
+        string callbackQueryId,
+        string? text = null,
+        CancellationToken cancellationToken = default)
+    {
+        await botClient.AnswerCallbackQuery(
+            callbackQueryId,
+            text: text,
+            cancellationToken: cancellationToken);
+    }
+
 }

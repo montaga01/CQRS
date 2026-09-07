@@ -1,3 +1,5 @@
+using TelegramBot.Application.Abstractions;
+using TelegramBot.Application.State;
 using TelegramBot.Contracts;
 using TelegramBot.Infrastructure.Telegram;
 
@@ -5,21 +7,28 @@ namespace TelegramBot.Application.Handlers;
 
 public sealed class TelegramUpdateHandler(
     ILogger<TelegramUpdateHandler> logger,
-    ITelegramClient telegramClient)
+    ITelegramClient telegramClient,
+    ITodoApiClient todoApiClient,
+    IConversationStateStore stateStore)
 {
     public async Task HandleAsync(
         TelegramUpdate update,
         CancellationToken cancellationToken)
     {
-        // معالجة ضغط Inline Button
+        // أولاً: معالجة ضغط الأزرار
         if (update.CallbackQuery is not null)
         {
             var callbackData = update.CallbackQuery.Data;
-            var callbackChatId = update.CallbackQuery.Message?.Chat.Id;
+            var callbackChatId =
+                update.CallbackQuery.Message?.Chat.Id;
+
+            await telegramClient.AnswerCallbackQueryAsync(
+                update.CallbackQuery.Id,
+                cancellationToken: cancellationToken);
 
             if (callbackChatId is null)
             {
-                logger.LogInformation(
+                logger.LogWarning(
                     "Callback query has no chat information.");
 
                 return;
@@ -35,6 +44,9 @@ public sealed class TelegramUpdateHandler(
                     "add_todo",
                     StringComparison.OrdinalIgnoreCase))
             {
+                stateStore.WaitForTodoTitle(
+                    callbackChatId.Value);
+
                 await telegramClient.SendTextMessageAsync(
                     callbackChatId.Value,
                     "اكتب اسم المهمة:",
@@ -44,7 +56,7 @@ public sealed class TelegramUpdateHandler(
             return;
         }
 
-        // التأكد من وجود Message
+        // ثانياً: التأكد من وجود رسالة نصية
         if (update.Message is null)
         {
             logger.LogInformation(
@@ -54,11 +66,9 @@ public sealed class TelegramUpdateHandler(
             return;
         }
 
-        // استخراج بيانات الرسالة
         var messageChatId = update.Message.Chat.Id;
         var text = update.Message.Text?.Trim();
 
-        // التأكد من وجود نص
         if (string.IsNullOrWhiteSpace(text))
         {
             logger.LogInformation(
@@ -68,7 +78,47 @@ public sealed class TelegramUpdateHandler(
             return;
         }
 
-        // معالجة الأوامر النصية
+        // ثالثاً: إذا كان المستخدم ينتظر إدخال اسم المهمة
+        if (stateStore.IsWaitingForTodoTitle(messageChatId))
+        {
+            var statusMessage =
+                await telegramClient.SendTextMessageAsync(
+                    messageChatId,
+                    "جاري إضافة المهمة...",
+                    cancellationToken);
+
+            try
+            {
+                await todoApiClient.CreateTodoAsync(
+                    text,
+                    cancellationToken);
+
+                stateStore.Clear(messageChatId);
+
+                await telegramClient.EditTextMessageAsync(
+                    messageChatId,
+                    statusMessage.MessageId,
+                    $"تمت إضافة المهمة بنجاح:\n{text}",
+                    cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                logger.LogError(
+                    exception,
+                    "Failed to create todo for chat {ChatId}.",
+                    messageChatId);
+
+                await telegramClient.EditTextMessageAsync(
+                    messageChatId,
+                    statusMessage.MessageId,
+                    "حدث خطأ أثناء إضافة المهمة. حاول مرة أخرى.",
+                    cancellationToken);
+            }
+
+            return;
+        }
+
+        // رابعاً: معالجة الأوامر العادية
         switch (text.ToLowerInvariant())
         {
             case "/start":
@@ -86,11 +136,6 @@ public sealed class TelegramUpdateHandler(
                 break;
 
             default:
-                logger.LogInformation(
-                    "Unknown text received from chat {ChatId}: {Text}",
-                    messageChatId,
-                    text);
-
                 await telegramClient.SendTextMessageAsync(
                     messageChatId,
                     "الأمر غير معروف. استخدم /start.",
